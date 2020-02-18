@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<extension version="2.6" type="plugin" group="vmpayment" method="upgrade">
+  <name>VM Payment - Cryptocurrency Payments via Plisio</name>
+  <creationDate>December 27th 2019</creationDate>
+  <author>Plisio</author>
+  <authorUrl>https://www.plisio.net</authorUrl>
+  <copyright>Copyright (C) 2019</copyright>
+  <license>https://github.com/plisio/virtuemart-plugin/blob/master/LICENSE MIT</license>
+	<version status="MINOR">1.0.0</version>
+  <description>Plisio cryptocurrency payment plugin</description>
+
+  <files>
+    <filename plugin="plisio">plisio.php</filename>
+    <folder>lib</folder>
+    <folder>language</folder>
+  </files>
+
+  <params addpath="/administrator/components/com_virtuemart/elements">
+    <param type="spacer" default="VMPAYMENT_PLISIO_CREDENTIALS_LABEL" level="level1" />
+    <param name="api_key" type="text" label="VMPAYMENT_PLISIO_API_KEY_LABEL" description="VMPAYMENT_PLISIO_API_KEY_DESCRIPTION" />
+    <param name="cryptocurrency" type="cryptocurrencies" label="VMPAYMENT_PLISIO_CRYPTOCURRENCY_LABEL" description="VMPAYMENT_PLISIO_CRYPTOCURRENCY_DESCRIPTION" />
+
+    <param type="spacer" default="VMPAYMENT_PLISIO_STATUSES_LABEL" level="level1" />
+    <param name="pending_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_PENDING_STATUS_LABEL" description="VMPAYMENT_PLISIO_PENDING_STATUS_DESCRIPTION"  />
+    <param name="completed_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_COMPLETED_STATUS_LABEL" description="VMPAYMENT_PLISIO_COMPLETED_STATUS_DESCRIPTION" />
+    <param name="canceled_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_CANCELED_STATUS_LABEL" description="VMPAYMENT_PLISIO_CANCELED_STATUS_DESCRIPTION" />
+    <param name="expired_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_EXPIRED_STATUS_LABEL" description="VMPAYMENT_PLISIO_EXPIRED_STATUS_DESCRIPTION" />
+    <param name="refunded_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_REFUNDED_STATUS_LABEL" description="VMPAYMENT_PLISIO_REFUNDED_STATUS_DESCRIPTION" />
+    <param name="invalid_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_INVALID_STATUS_LABEL" description="VMPAYMENT_PLISIO_INVALID_STATUS_DESCRIPTION" />
+    <param name="overpaid_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_OVERPAID_STATUS_LABEL" description="VMPAYMENT_PLISIO_OVERPAID_STATUS_DESCRIPTION" />
+  </params>
+
+  <config>
+    <fields name="params">
+      <fieldset name="basic" addfieldpath="/plugins/vmpayment/plisio/fields">
+        <field type="spacer" default="VMPAYMENT_PLISIO_CREDENTIALS_LABEL" level="level1" />
+        <field name="api_key" type="text" label="VMPAYMENT_PLISIO_API_KEY_LABEL" description="VMPAYMENT_PLISIO_API_KEY_DESCRIPTION"/>
+        <field name="cryptocurrency" type="cryptocurrencies" label="VMPAYMENT_PLISIO_CRYPTOCURRENCY_LABEL" description="VMPAYMENT_PLISIO_CRYPTOCURRENCY_DESCRIPTION" default="" />
+
+        <field type="spacer" default="VMPAYMENT_PLISIO_STATUSES_LABEL" level="level1" />
+        <field name="pending_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_PENDING_STATUS_LABEL" description="VMPAYMENT_PLISIO_PENDING_STATUS_DESCRIPTION" default="P" />
+        <field name="completed_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_COMPLETED_STATUS_LABEL" description="VMPAYMENT_PLISIO_COMPLETED_STATUS_DESCRIPTION" default="C" />
+        <field name="canceled_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_CANCELED_STATUS_LABEL" description="VMPAYMENT_PLISIO_CANCELED_STATUS_DESCRIPTION" default="X" />
+        <field name="expired_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_EXPIRED_STATUS_LABEL" description="VMPAYMENT_PLISIO_EXPIRED_STATUS_DESCRIPTION" default="P" />
+        <field name="refunded_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_REFUNDED_STATUS_LABEL" description="VMPAYMENT_PLISIO_REFUNDED_STATUS_DESCRIPTION" default="R" />
+        <field name="invalid_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_INVALID_STATUS_LABEL" description="VMPAYMENT_PLISIO_INVALID_STATUS_DESCRIPTION" default="D" />
+        <field name="overpaid_status" type="vmorderstate" scope="com_virtuemart" label="VMPAYMENT_PLISIO_OVERPAID_STATUS_LABEL" description="VMPAYMENT_PLISIO_OVERPAID_STATUS_DESCRIPTION" default="C" />
+        <field name="payment_logos" type="vmfiles" multiple="true" label="VMPAYMENT_PLISIO_LOGO_LABEL"
+          description="VMPAYMENT_PLISIO_LOGO_DESCRIPTION"
+          directory="/images/stories/virtuemart/payment"
+          default="plisio.png" hide_default="1" hide_none="1"
+          stripext="0" exclude="^_"/>
+      </fieldset>
+    </fields>
+  </config>
+</extension>
