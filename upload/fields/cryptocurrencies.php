@@ -1,13 +1,13 @@
 <?php
 /**
  *
- * Paypal  payment plugin
+ * Plisio  payment plugin
  *
- * @author Jeremy Magne
- * @version $Id: paypal.php 7217 2013-09-18 13:42:54Z alatak $
+ * @author Plisio
+ * @version 1.0.0
  * @package VirtueMart
  * @subpackage payment
- * Copyright (C) 2004 - 2019 Virtuemart Team. All rights reserved.
+ * Copyright (C) 2019 - 2020 Virtuemart Team. All rights reserved.
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
  * VirtueMart is free software. This version may have been modified pursuant
  * to the GNU General Public License, and as distributed it includes or

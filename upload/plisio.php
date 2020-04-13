@@ -1,7 +1,7 @@
 <?php
 
 defined('_JEXEC') or die('Restricted access');
-define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.0');
+define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.2');
 
 require_once('lib/Plisio/PlisioClient.php');
 
@@ -160,6 +160,10 @@ class plgVmPaymentPlisio extends vmPSPlugin
                         $orderStatus = $method->invalid_status;
                         $orderComment = 'Plisio invoice has some internal error. Please contact support for details.';
                         break;
+                    case 'cancelled':
+                        $orderStatus = $method->canceled_status;
+                        $orderComment = 'Plisio invoice is expired.';
+                        break;
                     case 'expired':
                         if ($post['source_amount'] > 0) {
                             $orderStatus = $method->expired_status;
@@ -181,8 +185,10 @@ class plgVmPaymentPlisio extends vmPSPlugin
                     $order['virtuemart_order_id'] = $virtuemartOrderId;
                     $order['customer_notified'] = 1;
                     $order['comments'] = $orderComment;
-                    $order['paid'] = $post['source_amount'];
-                    $order['paid_on'] = JFactory::getDate();
+                    if (!empty($post['source_amount']) && $post['source_amount'] > 0) {
+                        $order['paid'] = $post['source_amount'];
+                        $order['paid_on'] = JFactory::getDate();
+                    }
 
                     $modelOrder->updateStatusForOneOrder($virtuemartOrderId, $order, true);
 
@@ -268,27 +274,60 @@ class plgVmPaymentPlisio extends vmPSPlugin
 
         $html = '<input type="radio" name="' . $pluginmethod_id . '" id="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '"   value="' . $plugin->$pluginmethod_id . '" ' . $checked . ">\n"
             . '<label for="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '">' . '<span class="' . $this->_type . '">' . $plugin->$pluginName . "</span></label>\n";
+
         $plisio = new PlisioClient('');
         $currencies = $plisio->getCurrencies();
+        $receive_currencies = $currencies['data'];
+        if (empty($receive_currencies)) {
+            return $html;
+        }
+        $plisio_receive_currencies = $method->cryptocurrency ? $method->cryptocurrency : array();
 
-        if ($method->cryptocurrency == '') {
+        if (empty($plisio_receive_currencies) || count($plisio_receive_currencies) > 1
+            || (count($plisio_receive_currencies) === 1 && $plisio_receive_currencies[0] === '')
+        ) {
+            usort($receive_currencies, function ($a, $b) use ($plisio_receive_currencies) {
+                $idxA = array_search($a['cid'], $plisio_receive_currencies);
+                $idxB = array_search($b['cid'], $plisio_receive_currencies);
+
+                $idxA = $idxA === false ? -1 : $idxA;
+                $idxB = $idxB === false ? -1 : $idxB;
+
+                if ($idxA < 0 && $idxB < 0) return -1;
+                if ($idxA < 0 && $idxB >= 0) return 1;
+                if ($idxA >= 0 && $idxB < 0) return -1;
+                return $idxA - $idxB;
+            });
+
+            echo '<pre>' . print_r($plisio_receive_currencies, 1) . '</pre>';
+            echo '<pre>' . print_r($receive_currencies, 1) . '</pre>';
+            die();
+
+
             $jinput = JFactory::getApplication()->input;
             $plisio_currency = $jinput->getString('plisio_currency', '');
+
             $html .= '<select name="plisio_currency">';
-            foreach ($currencies['data'] as $item) {
-                $selected = $item['cid'] == $plisio_currency ? 'selected="seleted"' : '';
-                $html .= '<option value="' . htmlspecialchars($item['cid']) . '" '.$selected.'>' . htmlspecialchars($item['name'] . ' (' . $item['currency'] . ')') . '</option>';
+
+            foreach ($receive_currencies as $item) {
+                if (empty($plisio_receive_currencies) || in_array($item['cid'], $plisio_receive_currencies)
+                    || (count($plisio_receive_currencies) === 1 && $plisio_receive_currencies[0] === '')
+                ) {
+                    $selected = $item['cid'] === $plisio_currency ? 'selected="seleted"' : '';
+                    $html .= '<option value="' . htmlspecialchars($item['cid']) . '" ' . $selected . '>' .
+                        htmlspecialchars($item['name'] . ' (' . $item['currency'] . ')') .
+                        '</option>';
+                }
             }
             $html .= '</select>';
-        } else {
-            $currencies = $currencies['data'];
-            $selected = $method->cryptocurrency;
-            $currency = array_filter($currencies, function ($i) use ($selected){ return $i['cid'] == $selected;});
+        }   else {
+            $currency = array_filter($receive_currencies, function ($i) use ($plisio_receive_currencies) {
+                return in_array($i['cid'], $plisio_receive_currencies);
+            });
             $currency = array_values($currency);
             $html .= ' with '. $currency[0]['name'] . ' (' . $currency[0]['currency'] . ')';
-            $html .= '<input type="hidden" name="plisio_currency" value="'.htmlspecialchars($method->cryptocurrency).'">';
+            $html .= '<input type="hidden" name="plisio_currency" value="'.htmlspecialchars($currency[0]['cid']).'">';
         }
-
         return $html;
     }
 
@@ -364,7 +403,9 @@ class plgVmPaymentPlisio extends vmPSPlugin
             'success_url' => (JROUTE::_(JURI::root() . 'index.php?option=com_virtuemart&view=pluginresponse&task=pluginresponsereceived&pm=' . $paymentMethodID)),
             'description' => join($description, ', '),
             'email' => $order['details']['BT']->email,
-            'language' => $lang->getTag()
+            'language' => $lang->getTag(),
+            'plugin' => 'virtuemart',
+            'version' => PLISIO_VIRTUEMART_EXTENSION_VERSION
         );
         $invoice = $plisio->createTransaction($request);
 
