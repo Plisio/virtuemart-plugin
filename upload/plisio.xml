@@ -7,11 +7,12 @@
   <authorUrl>https://www.plisio.net</authorUrl>
   <copyright>Copyright (C) 2019</copyright>
   <license>https://github.com/plisio/virtuemart-plugin/blob/master/LICENSE MIT</license>
-  <version status="MINOR">1.0.0</version>
+  <version status="MINOR">1.0.3</version>
   <description>Plisio cryptocurrency payment plugin</description>
 
   <files>
     <filename plugin="plisio">plisio.php</filename>
+    <folder>fields</folder>
     <folder>lib</folder>
     <folder>language</folder>
   </files>

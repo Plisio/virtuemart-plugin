@@ -1,7 +1,7 @@
 <?php
 
 defined('_JEXEC') or die('Restricted access');
-define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.2');
+define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.3');
 
 require_once('lib/Plisio/PlisioClient.php');
 
