@@ -50,4 +50,8 @@
       </fieldset>
     </fields>
   </config>
+  <updateservers>
+    <!-- Note: No spaces or linebreaks allowed between the server tags -->
+    <server type="extension" name="VirtueMart plg_vmpayment_plisio Update Site"><![CDATA[http://virtuemart.net/releases/vm3/plg_vmpayment_plisio_update.xml]]></server>
+  </updateservers>
 </extension>
