@@ -4,7 +4,7 @@
  * Plisio  payment plugin
  *
  * @author Plisio
- * @version 1.0.5
+ * @version 1.0.6
  * @package VirtueMart
  * @subpackage payment
  * Copyright (C) 2019 - 2020 Virtuemart Team. All rights reserved.
@@ -20,7 +20,7 @@
 
 
 defined('_JEXEC') or die('Restricted access');
-define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.5');
+define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.6');
 
 require_once('lib/Plisio/PlisioClient.php');
 
@@ -251,7 +251,32 @@ class plgVmPaymentPlisio extends vmPSPlugin
         return true;
     }
 
-    protected function renderPluginName($plugin)
+    public function onSelectedCalculatePrice (VirtueMartCart $cart, array &$cart_prices, &$cart_prices_name) {
+
+        $idName = $this->_idName;
+
+        if (!($method = $this->selectedThisByMethodId ($cart->{$idName}))) {
+            return NULL; // Another method was selected, do nothing
+        }
+        if (!$method = $this->getVmPluginMethod ($cart->{$idName}) or empty($method->{$idName})) {
+            return NULL;
+        }
+
+        $cart_prices_name = '';
+        $cart_prices['cost'] = 0;
+
+        if (!$this->checkConditions ($cart, $method, $cart_prices)) {
+            return FALSE;
+        }
+
+        $cart_prices_name = $this->renderPluginName ($method, $cart->automaticSelectedPayment);
+
+        $this->setCartPrices ($cart, $cart_prices, $method);
+
+        return TRUE;
+    }
+
+    protected function renderPluginName($plugin, $addSelect = false)
     {
 
         static $c = array();
@@ -273,33 +298,20 @@ class plgVmPaymentPlisio extends vmPSPlugin
         if (!empty($plugin->$plugin_desc)) {
             $description = '<span class="' . $this->_type . '_description">' . $plugin->$plugin_desc . '</span>';
         }
-        $c[$this->_psType][$plugin->$idN] = $return . '<span class="' . $this->_type . '_name">' . $plugin->$plugin_name . '</span>' . $description;
+        $c[$this->_psType][$plugin->$idN] = $return . '<span class="' . $this->_type . '_name">' . $plugin->$plugin_name . '</span>' . $description . ($addSelect ? $this->getCryptoList($plugin) : '');
 
         return $c[$this->_psType][$plugin->$idN];
     }
 
-    protected function getPluginHtml($plugin, $selectedPlugin, $pluginSalesPrice)
-    {
-
-        $pluginmethod_id = $this->_idName;
-        $pluginName = $this->_psType . '_name';
-        if ($selectedPlugin == $plugin->$pluginmethod_id) {
-            $checked = 'checked="checked"';
-        } else {
-            $checked = '';
-        }
-
-        $method = $this->getVmPluginMethod($plugin->$pluginmethod_id);
-
-        $html = '<input type="radio" name="' . $pluginmethod_id . '" id="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '"   value="' . $plugin->$pluginmethod_id . '" ' . $checked . ">\n"
-            . '<label for="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '">' . '<span class="' . $this->_type . '">' . $plugin->$pluginName . "</span></label>\n";
-
+    private function getCryptoList($plugin){
+        $html = '';
         $plisio = new PlisioClient('');
         $currencies = $plisio->getCurrencies();
         $receive_currencies = $currencies['data'];
         if (empty($receive_currencies)) {
             return $html;
         }
+        $method = $this->getVmPluginMethod($plugin->{$this->_idName});
         $plisio_receive_currencies = $method->cryptocurrency ? $method->cryptocurrency : array();
 
         if (empty($plisio_receive_currencies) || count($plisio_receive_currencies) > 1
@@ -343,6 +355,26 @@ class plgVmPaymentPlisio extends vmPSPlugin
             $html .= ' with '. $currency[0]['name'] . ' (' . $currency[0]['currency'] . ')';
             $html .= '<input type="hidden" name="plisio_currency" value="'.htmlspecialchars($currency[0]['cid']).'">';
         }
+        return $html;
+    }
+
+    protected function getPluginHtml($plugin, $selectedPlugin, $pluginSalesPrice)
+    {
+
+        $pluginmethod_id = $this->_idName;
+        $pluginName = $this->_psType . '_name';
+        if ($selectedPlugin == $plugin->$pluginmethod_id) {
+            $checked = 'checked="checked"';
+        } else {
+            $checked = '';
+        }
+
+        $html = '<input type="radio" name="' . $pluginmethod_id . '" id="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '"   value="' . $plugin->$pluginmethod_id . '" ' . $checked . ">\n"
+            . '<label for="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '">' . '<span class="' . $this->_type . '">' . $plugin->$pluginName . "</span></label>\n";
+
+
+        $html .= $this->getCryptoList($plugin);
+
         return $html;
     }
 

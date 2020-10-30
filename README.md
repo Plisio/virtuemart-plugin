@@ -18,7 +18,7 @@ Setup your store in API tab.
 
 1. Download [plisio-virtuemart-1.0.0.zip](https://plisio.net/download/plugins/plisio-virtuemart-1.0.0.zip)
 
-2. Login to your VirtueMart store admin panel, go to *Extensions » Manage » Install*. In the *Upload Package File* part, choose **plisio-virtuemart-1.0.0.zip** you previously downloaded, then click **Upload & Install**.
+2. Login to your VirtueMart store admin panel, go to *Extensions » Manage » Install*. In the *Upload Package File* part, choose **plisio-virtuemart-1.0.5.zip** you previously downloaded, then click **Upload & Install**.
 
 3. Go to *Extensions » Plugins*. In search box type **Plisio** and click **Search**. Either click on status indicator located in Plisio extension row, or mark the checkbox of Plisio extension row and click **Enable** at the top of admin panel.
 
