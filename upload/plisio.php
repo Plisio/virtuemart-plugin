@@ -4,7 +4,7 @@
  * Plisio  payment plugin
  *
  * @author Plisio
- * @version 1.0.4
+ * @version 1.0.5
  * @package VirtueMart
  * @subpackage payment
  * Copyright (C) 2019 - 2020 Virtuemart Team. All rights reserved.
@@ -20,7 +20,7 @@
 
 
 defined('_JEXEC') or die('Restricted access');
-define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.4');
+define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.5');
 
 require_once('lib/Plisio/PlisioClient.php');
 
@@ -150,10 +150,10 @@ class plgVmPaymentPlisio extends vmPSPlugin
             $jinput = JFactory::getApplication()->input;
             $post = $jinput->getArray($_POST);
 
-            if (!isset($post['order_number']))
+            if (!isset($post['order_number']) && !isset($post['order_id'])) {
                 throw new Exception('order_number was not found in callback');
-
-            $virtuemartOrderId = $post['order_number'];
+            }
+            $virtuemartOrderId = isset($post['order_id']) ? $post['order_id'] : $post['order_number'];
 
             $modelOrder = VmModel::getModel('orders');
             $order = $modelOrder->getOrder($virtuemartOrderId);
@@ -317,10 +317,6 @@ class plgVmPaymentPlisio extends vmPSPlugin
                 if ($idxA >= 0 && $idxB < 0) return -1;
                 return $idxA - $idxB;
             });
-
-            echo '<pre>' . print_r($plisio_receive_currencies, 1) . '</pre>';
-            echo '<pre>' . print_r($receive_currencies, 1) . '</pre>';
-            die();
 
 
             $jinput = JFactory::getApplication()->input;
