@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <extension version="2.6" type="plugin" group="vmpayment" method="upgrade">
-  <name>VM Payment - Cryptocurrency Payments via Plisio</name>
+  <name>VM Payment - Plisio Cryptocurrency Payment Gateway</name>
   <creationDate>December 27th 2019</creationDate>
   <author>Plisio</author>
   <authorUrl>https://www.plisio.net</authorUrl>
   <copyright>Copyright (C) 2019</copyright>
   <license>https://github.com/plisio/virtuemart-plugin/blob/master/LICENSE MIT</license>
-  <version status="MINOR">1.0.6</version>
+  <version status="MINOR">1.0.7</version>
   <description>Plisio cryptocurrency payment plugin</description>
 
   <files>

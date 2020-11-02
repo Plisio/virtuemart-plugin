@@ -1,4 +1,4 @@
-Plisio Cryptocurrence Payment Gateway for VirtueMart
+VM Payment - Plisio Cryptocurrency Payment Gateway
 =====================================================
 
 This plugin allows stores using the VirtueMart shopping cart system to accept cryptocurrency payments via the Plisio gateway.

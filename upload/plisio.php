@@ -4,7 +4,7 @@
  * Plisio  payment plugin
  *
  * @author Plisio
- * @version 1.0.6
+ * @version 1.0.7
  * @package VirtueMart
  * @subpackage payment
  * Copyright (C) 2019 - 2020 Virtuemart Team. All rights reserved.
@@ -20,7 +20,7 @@
 
 
 defined('_JEXEC') or die('Restricted access');
-define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.6');
+define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.7');
 
 require_once('lib/Plisio/PlisioClient.php');
 

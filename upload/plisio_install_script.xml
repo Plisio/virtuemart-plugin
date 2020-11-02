@@ -3,14 +3,14 @@
 
 <install version="2.5" type="plugin" group="vmpayment" method="upgrade">
 
-	<name>Plisio VirtueMart Plugin</name>
+	<name>VM Payment - Plisio Cryptocurrency Payment Gateway</name>
 
 	<creationDate>December 27th 2019</creationDate>
 	<author>Plisio</author>
 	<authorUrl>https://plisio.net</authorUrl>
 	<copyright>Copyright (C) 2019</copyright>
 	<license>http://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
-	<version status="MINOR">1.0.6</version>
+	<version status="MINOR">1.0.7</version>
 
 	<files>
 		<filename plugin="plisio">plisio.xml</filename>
