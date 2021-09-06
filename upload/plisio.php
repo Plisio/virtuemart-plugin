@@ -4,7 +4,7 @@
  * Plisio  payment plugin
  *
  * @author Plisio
- * @version 1.0.7
+ * @version 1.1.0
  * @package VirtueMart
  * @subpackage payment
  * Copyright (C) 2019 - 2020 Virtuemart Team. All rights reserved.
@@ -20,7 +20,7 @@
 
 
 defined('_JEXEC') or die('Restricted access');
-define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.0.7');
+define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.1.0');
 
 require_once('lib/Plisio/PlisioClient.php');
 
@@ -29,6 +29,7 @@ if (!class_exists('vmPSPlugin'))
 
 class plgVmPaymentPlisio extends vmPSPlugin
 {
+    private $plisio;
     function __construct(&$subject, $config)
     {
         parent::__construct($subject, $config);
@@ -298,64 +299,9 @@ class plgVmPaymentPlisio extends vmPSPlugin
         if (!empty($plugin->$plugin_desc)) {
             $description = '<span class="' . $this->_type . '_description">' . $plugin->$plugin_desc . '</span>';
         }
-        $c[$this->_psType][$plugin->$idN] = $return . '<span class="' . $this->_type . '_name">' . $plugin->$plugin_name . '</span>' . $description . ($addSelect ? $this->getCryptoList($plugin) : '');
+        $c[$this->_psType][$plugin->$idN] = $return . '<span class="' . $this->_type . '_name">' . $plugin->$plugin_name . '</span>' . $description;
 
         return $c[$this->_psType][$plugin->$idN];
-    }
-
-    private function getCryptoList($plugin){
-        $html = '';
-        $plisio = new PlisioClient('');
-        $currencies = $plisio->getCurrencies();
-        $receive_currencies = $currencies['data'];
-        if (empty($receive_currencies)) {
-            return $html;
-        }
-        $method = $this->getVmPluginMethod($plugin->{$this->_idName});
-        $plisio_receive_currencies = $method->cryptocurrency ? $method->cryptocurrency : array();
-
-        if (empty($plisio_receive_currencies) || count($plisio_receive_currencies) > 1
-            || (count($plisio_receive_currencies) === 1 && $plisio_receive_currencies[0] === '')
-        ) {
-            usort($receive_currencies, function ($a, $b) use ($plisio_receive_currencies) {
-                $idxA = array_search($a['cid'], $plisio_receive_currencies);
-                $idxB = array_search($b['cid'], $plisio_receive_currencies);
-
-                $idxA = $idxA === false ? -1 : $idxA;
-                $idxB = $idxB === false ? -1 : $idxB;
-
-                if ($idxA < 0 && $idxB < 0) return -1;
-                if ($idxA < 0 && $idxB >= 0) return 1;
-                if ($idxA >= 0 && $idxB < 0) return -1;
-                return $idxA - $idxB;
-            });
-
-
-            $jinput = JFactory::getApplication()->input;
-            $plisio_currency = $jinput->getString('plisio_currency', '');
-
-            $html .= '<select name="plisio_currency">';
-
-            foreach ($receive_currencies as $item) {
-                if (empty($plisio_receive_currencies) || in_array($item['cid'], $plisio_receive_currencies)
-                    || (count($plisio_receive_currencies) === 1 && $plisio_receive_currencies[0] === '')
-                ) {
-                    $selected = $item['cid'] === $plisio_currency ? 'selected="seleted"' : '';
-                    $html .= '<option value="' . htmlspecialchars($item['cid']) . '" ' . $selected . '>' .
-                        htmlspecialchars($item['name'] . ' (' . $item['currency'] . ')') .
-                        '</option>';
-                }
-            }
-            $html .= '</select>';
-        }   else {
-            $currency = array_filter($receive_currencies, function ($i) use ($plisio_receive_currencies) {
-                return in_array($i['cid'], $plisio_receive_currencies);
-            });
-            $currency = array_values($currency);
-            $html .= ' with '. $currency[0]['name'] . ' (' . $currency[0]['currency'] . ')';
-            $html .= '<input type="hidden" name="plisio_currency" value="'.htmlspecialchars($currency[0]['cid']).'">';
-        }
-        return $html;
     }
 
     protected function getPluginHtml($plugin, $selectedPlugin, $pluginSalesPrice)
@@ -371,9 +317,6 @@ class plgVmPaymentPlisio extends vmPSPlugin
 
         $html = '<input type="radio" name="' . $pluginmethod_id . '" id="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '"   value="' . $plugin->$pluginmethod_id . '" ' . $checked . ">\n"
             . '<label for="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '">' . '<span class="' . $this->_type . '">' . $plugin->$pluginName . "</span></label>\n";
-
-
-        $html .= $this->getCryptoList($plugin);
 
         return $html;
     }
@@ -404,6 +347,14 @@ class plgVmPaymentPlisio extends vmPSPlugin
         return $stamp;
     }
 
+    private function get_plisio_receive_currencies ($source_currency) {
+        $currencies = $this->plisio->getCurrencies($source_currency);
+        return array_reduce($currencies, function ($acc, $curr) {
+            $acc[$curr['cid']] = $curr;
+            return $acc;
+        }, []);
+    }
+
     function plgVmConfirmedOrder($cart, $order)
     {
         if (!($method = $this->getVmPluginMethod($order['details']['BT']->virtuemart_paymentmethod_id)))
@@ -421,21 +372,24 @@ class plgVmPaymentPlisio extends vmPSPlugin
         VmConfig::loadJLang('com_virtuemart', true);
         VmConfig::loadJLang('com_virtuemart_orders', true);
 
+        $mainframe = JFactory::getApplication();
+		$plugin = JPluginHelper::getPlugin('vmpayment', 'plisio');
+        $pluginParams = new JRegistry();
+        $pluginParams->loadString($plugin->params);
+
         $orderID = $order['details']['BT']->virtuemart_order_id;
         $paymentMethodID = $order['details']['BT']->virtuemart_paymentmethod_id;
 
         $currency_code_3 = shopFunctions::getCurrencyByID($order['details']['BT']->order_currency, 'currency_code_3');
 
+        $this->plisio = new PlisioClient($pluginParams['api_key']);
+        $plisio_receive_currencies = $this->get_plisio_receive_currencies($currency_code_3);
+        $plisio_receive_cids = array_keys($plisio_receive_currencies);
+
         $description = array();
         foreach ($order['items'] as $item) {
             $description[] = $item->product_quantity . ' × ' . $item->order_item_name;
         }
-
-        $plugin = JPluginHelper::getPlugin('vmpayment', 'plisio');
-        $pluginParams = new JRegistry();
-        $pluginParams->loadString($plugin->params);
-
-        $plisio = new PlisioClient($method->api_key);
 
         $lang = JFactory::getLanguage();
 
@@ -444,7 +398,7 @@ class plgVmPaymentPlisio extends vmPSPlugin
             'order_name' => JFactory::getApplication()->getCfg('sitename'),
             'source_amount' => $order['details']['BT']->order_total,
             'source_currency' => $currency_code_3,
-            'currency' => strtoupper($_POST['plisio_currency']),
+            'currency' => $plisio_receive_cids[0],
             'cancel_url' => (JROUTE::_(JURI::root() . 'index.php?option=com_virtuemart&view=cart')),
             'callback_url' => (JROUTE::_(JURI::root() . 'index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component')),
             'success_url' => (JROUTE::_(JURI::root() . 'index.php?option=com_virtuemart&view=pluginresponse&task=pluginresponsereceived&pm=' . $paymentMethodID)),
@@ -454,12 +408,17 @@ class plgVmPaymentPlisio extends vmPSPlugin
             'plugin' => 'virtuemart',
             'version' => PLISIO_VIRTUEMART_EXTENSION_VERSION
         );
-        $invoice = $plisio->createTransaction($request);
+        $invoice = $this->plisio->createTransaction($request);
 
-        if ($invoice['status'] == 'success') {
-            $cart->emptyCart();
-            header('Location: ' . $invoice['data']['invoice_url']);
-            exit;
+        if ($invoice) {
+            if ($invoice['status'] == 'error') {
+                $html = "<h3> An error occurred while placing order! Error info: " . json_decode($invoice['data']['message'], true)['amount'] .  "</h3>";
+                return $this->processConfirmedOrderPaymentResponse(2, $cart, $order, $html, 'Plisio', '');
+            } else {
+                $cart->emptyCart();
+                header('Location: ' . $invoice['data']['invoice_url']);
+                exit;
+            }
         }
     }
 }

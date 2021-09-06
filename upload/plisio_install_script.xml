@@ -10,7 +10,7 @@
 	<authorUrl>https://plisio.net</authorUrl>
 	<copyright>Copyright (C) 2019</copyright>
 	<license>http://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
-	<version status="MINOR">1.0.7</version>
+	<version status="MINOR">1.1.0</version>
 
 	<files>
 		<filename plugin="plisio">plisio.xml</filename>
