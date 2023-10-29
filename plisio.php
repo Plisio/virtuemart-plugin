@@ -1,10 +1,10 @@
 <?php
 /**
  *
- * Plisio  payment plugin
+ * Plisio payment plugin
  *
  * @author Plisio
- * @version 1.1.0
+ * @version 4.0.0
  * @package VirtueMart
  * @subpackage payment
  * Copyright (C) 2019 - 2020 Virtuemart Team. All rights reserved.
@@ -20,12 +20,17 @@
 
 
 defined('_JEXEC') or die('Restricted access');
-define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '1.1.0');
+define('PLISIO_VIRTUEMART_EXTENSION_VERSION', '4.0.0');
 
 require_once('lib/Plisio/PlisioClient.php');
 
-if (!class_exists('vmPSPlugin'))
-    require(JPATH_VM_PLUGINS . DS . 'vmpsplugin.php');
+if (!class_exists('vmPSPlugin')) {
+    require(VMPATH_PLUGINLIBS . DS . 'vmpsplugin.php');
+}
+
+if (!class_exists('vmCrypt')) {
+    require(VMPATH_ADMIN . DS . 'helpers' . DS . 'vmcrypt.php');
+}
 
 class plgVmPaymentPlisio extends vmPSPlugin
 {
@@ -41,12 +46,12 @@ class plgVmPaymentPlisio extends vmPSPlugin
         $this->setConfigParameterable($this->_configTableFieldName, $varsToPush);
     }
 
-    public function getVmPluginCreateTableSQL()
+    public function getVmPluginCreateTableSQL(): string
     {
         return $this->createTableSQL('Payment Plisio Table');
     }
 
-    function getTableSQLFields()
+    function getTableSQLFields(): array
     {
         $SQLfields = array(
             'id' => 'int(1) UNSIGNED NOT NULL AUTO_INCREMENT',
@@ -62,27 +67,27 @@ class plgVmPaymentPlisio extends vmPSPlugin
         return $SQLfields;
     }
 
-    function getCosts(VirtueMartCart $cart, $method, $cart_prices)
+    function getCosts(VirtueMartCart $cart, $method, $cart_prices): int
     {
         return 0;
     }
 
-    protected function checkConditions($cart, $method, $cart_prices)
+    protected function checkConditions($cart, $method, $cart_prices): bool
     {
         return true;
     }
 
-    function plgVmOnStoreInstallPaymentPluginTable($jplugin_id)
+    function plgVmOnStoreInstallPaymentPluginTable($jplugin_id): ?bool
     {
         return $this->onStoreInstallPluginTable($jplugin_id);
     }
 
-    public function plgVmonSelectedCalculatePricePayment(VirtueMartCart $cart, array &$cart_prices, &$cart_prices_name)
+    public function plgVmOnSelectedCalculatePricePayment(VirtueMartCart $cart, array &$cart_prices, &$cart_prices_name): ?bool
     {
         return $this->onSelectedCalculatePrice($cart, $cart_prices, $cart_prices_name);
     }
 
-    function plgVmgetPaymentCurrency($virtuemart_paymentmethod_id, &$paymentCurrencyId)
+    function plgVmgetPaymentCurrency($virtuemart_paymentmethod_id, &$paymentCurrencyId): ?bool
     {
         if (!($method = $this->getVmPluginMethod($virtuemart_paymentmethod_id)))
             return NULL;
@@ -94,15 +99,15 @@ class plgVmPaymentPlisio extends vmPSPlugin
 
         $paymentCurrencyId = $method->payment_currency;
 
-        return;
+        return TRUE;
     }
 
-    function plgVmOnCheckAutomaticSelectedPayment(VirtueMartCart $cart, array $cart_prices = array(), &$paymentCounter)
+    function plgVmOnCheckAutomaticSelectedPayment(VirtueMartCart $cart, array $cart_prices, &$paymentCounter): ?array
     {
-        return $this->onCheckAutomaticSelected($cart, $cart_prices, $paymentCounter);
+        return $this->onCheckAutomaticSelected($cart, $cart_prices,$paymentCounter);
     }
 
-    public function plgVmOnShowOrderFEPayment($virtuemart_order_id, $virtuemart_paymentmethod_id, &$payment_name)
+    public function plgVmOnShowOrderFEPayment($virtuemart_order_id, $virtuemart_paymentmethod_id, &$payment_name): void
     {
         $this->onShowOrderFE($virtuemart_order_id, $virtuemart_paymentmethod_id, $payment_name);
     }
@@ -112,22 +117,22 @@ class plgVmPaymentPlisio extends vmPSPlugin
         return $this->onShowOrderPrint($order_number, $method_id);
     }
 
-    function plgVmDeclarePluginParamsPayment($name, $id, &$data)
+    function plgVmDeclarePluginParamsPayment($name, $id, &$data): bool
     {
         return $this->declarePluginParams('payment', $name, $id, $data);
     }
 
-    function plgVmDeclarePluginParamsPaymentVM3(&$data)
+    function plgVmDeclarePluginParamsPaymentVM3(&$data): bool
     {
         return $this->declarePluginParams('payment', $data);
     }
 
-    function plgVmSetOnTablePluginParamsPayment($name, $id, &$table)
+    function plgVmSetOnTablePluginParamsPayment($name, $id, &$table): bool
     {
         return $this->setOnTablePluginParams($name, $id, $table);
     }
 
-    private function verifyCallbackData($post, $apiKey)
+    private function verifyCallbackData($post, $apiKey): bool
     {
         if (!isset($post['verify_hash'])) {
             return false;
@@ -217,42 +222,38 @@ class plgVmPaymentPlisio extends vmPSPlugin
         } catch (Exception $e) {
             exit(get_class($e) . ': ' . $e->getMessage());
         }
+        return TRUE;
     }
 
-    function plgVmOnPaymentResponseReceived(&$html)
+    function plgVmOnPaymentResponseReceived(&$html): ?bool
     {
-        if (!class_exists('VirtueMartCart'))
-            require(JPATH_VM_SITE . DS . 'helpers' . DS . 'cart.php');
+        $virtuemart_paymentmethod_id = vRequest::getInt('pm', 0);
 
-        if (!class_exists('shopFunctionsF'))
-            require(JPATH_VM_SITE . DS . 'helpers' . DS . 'shopfunctionsf.php');
+        $order_number = vRequest::getString('order_number', 0);
 
-        if (!class_exists('VirtueMartModelOrders'))
-            require(JPATH_VM_ADMINISTRATOR . DS . 'models' . DS . 'orders.php');
-
-        $virtuemart_paymentmethod_id = JRequest::getInt('pm', 0);
-        $order_number = JRequest::getString('order_number', 0);
-        $vendorId = 0;
-
-        if (!($method = $this->getVmPluginMethod($virtuemart_paymentmethod_id)))
-            return NULL;
-
-        if (!$this->selectedThisElement($method->payment_element))
-            return NULL;
-
-        if (!($virtuemart_order_id = VirtueMartModelOrders::getOrderIdByOrderNumber($order_number)))
-            return NULL;
-
-        if (!($paymentTable = $this->getDataByOrderId($virtuemart_order_id)))
-            return '';
+        if (!$virtuemart_paymentmethod_id) {
+            return FALSE;
+        }
+        if (!($method = $this->getVmPluginMethod($virtuemart_paymentmethod_id))) {
+            return NULL; // Another method was selected, do nothing
+        }
+        if (!$this->selectedThisElement($method->payment_element)) {
+            return FALSE;
+        }
 
         $payment_name = $this->renderPluginName($method);
-        $html = $this->_getPaymentResponseHtml($paymentTable, $payment_name);
+        $html = $this->renderByLayout('response_page', array(
+            'TransactionID' => $order_number,
+            'ResponseCode' => 200,
+            'ResponseMessage' => 'Order Created Successfully',
+            'pageTitle' => $payment_name,
+        ));
 
         return true;
     }
 
-    public function onSelectedCalculatePrice (VirtueMartCart $cart, array &$cart_prices, &$cart_prices_name) {
+    public function onSelectedCalculatePrice (VirtueMartCart $cart, array &$cart_prices, &$cart_prices_name): ?bool
+    {
 
         $idName = $this->_idName;
 
@@ -304,7 +305,7 @@ class plgVmPaymentPlisio extends vmPSPlugin
         return $c[$this->_psType][$plugin->$idN];
     }
 
-    protected function getPluginHtml($plugin, $selectedPlugin, $pluginSalesPrice)
+    protected function getPluginHtml($plugin, $selectedPlugin, $pluginSalesPrice): string
     {
 
         $pluginmethod_id = $this->_idName;
@@ -321,9 +322,9 @@ class plgVmPaymentPlisio extends vmPSPlugin
         return $html;
     }
 
-    function plgVmDisplayListFEPayment(VirtueMartCart $cart, $selected = 0, &$htmlIn)
+    function plgVmDisplayListFEPayment(VirtueMartCart $cart, $selected, &$htmlIn): bool
     {
-        $session = JFactory::getSession();
+        $session = JFactory::getApplication()->getSession();
         $errors = $session->get('errorMessages', 0, 'vm');
 
         if ($errors != "") {
@@ -333,26 +334,6 @@ class plgVmPaymentPlisio extends vmPSPlugin
             $errors = array();
 
         return $this->displayListFE($cart, $selected, $htmlIn);
-    }
-
-    public function getGMTTimeStamp()
-    {
-        $tz_minutes = date('Z') / 60;
-
-        if ($tz_minutes >= 0)
-            $tz_minutes = '+' . sprintf("%03d", $tz_minutes);
-
-        $stamp = date('YdmHis000000') . $tz_minutes;
-
-        return $stamp;
-    }
-
-    private function get_plisio_receive_currencies ($source_currency) {
-        $currencies = $this->plisio->getCurrencies($source_currency);
-        return array_reduce($currencies, function ($acc, $curr) {
-            $acc[$curr['cid']] = $curr;
-            return $acc;
-        }, []);
     }
 
     function plgVmConfirmedOrder($cart, $order)
@@ -369,56 +350,39 @@ class plgVmPaymentPlisio extends vmPSPlugin
         if (!class_exists('VirtueMartModelCurrency'))
             require(JPATH_VM_ADMINISTRATOR . DS . 'models' . DS . 'currency.php');
 
-        VmConfig::loadJLang('com_virtuemart', true);
-        VmConfig::loadJLang('com_virtuemart_orders', true);
-
-        $mainframe = JFactory::getApplication();
-		$plugin = JPluginHelper::getPlugin('vmpayment', 'plisio');
-        $pluginParams = new JRegistry();
-        $pluginParams->loadString($plugin->params);
+        VmLanguage::loadJLang('com_virtuemart', true);
+        VmLanguage::loadJLang('com_virtuemart_orders', true);
 
         $orderID = $order['details']['BT']->virtuemart_order_id;
         $paymentMethodID = $order['details']['BT']->virtuemart_paymentmethod_id;
 
+        $api_key = $method->api_key;
+
         $currency_code_3 = shopFunctions::getCurrencyByID($order['details']['BT']->order_currency, 'currency_code_3');
 
-        $this->plisio = new PlisioClient($pluginParams['api_key']);
-        $plisio_receive_currencies = $this->get_plisio_receive_currencies($currency_code_3);
-        $plisio_receive_cids = array_keys($plisio_receive_currencies);
-
-        $description = array();
-        foreach ($order['items'] as $item) {
-            $description[] = $item->product_quantity . ' × ' . $item->order_item_name;
-        }
-
-        $lang = JFactory::getLanguage();
+        $this->plisio = new PlisioClient($api_key);
 
         $request = array(
             'order_number' => $orderID,
-            'order_name' => JFactory::getApplication()->getCfg('sitename'),
+            'order_name' => "Order #$orderID",
             'source_amount' => $order['details']['BT']->order_total,
             'source_currency' => $currency_code_3,
-            'currency' => $plisio_receive_cids[0],
             'cancel_url' => (JROUTE::_(JURI::root() . 'index.php?option=com_virtuemart&view=cart')),
             'callback_url' => (JROUTE::_(JURI::root() . 'index.php?option=com_virtuemart&view=pluginresponse&task=pluginnotification&tmpl=component')),
             'success_url' => (JROUTE::_(JURI::root() . 'index.php?option=com_virtuemart&view=pluginresponse&task=pluginresponsereceived&pm=' . $paymentMethodID)),
-            'description' => join($description, ', '),
             'email' => $order['details']['BT']->email,
-            'language' => $lang->getTag(),
             'plugin' => 'virtuemart',
             'version' => PLISIO_VIRTUEMART_EXTENSION_VERSION
         );
-        $invoice = $this->plisio->createTransaction($request);
-
-        if ($invoice) {
-            if ($invoice['status'] == 'error') {
-                $html = "<h3> An error occurred while placing order! Error info: " . json_decode($invoice['data']['message'], true)['amount'] .  "</h3>";
-                return $this->processConfirmedOrderPaymentResponse(2, $cart, $order, $html, 'Plisio', '');
-            } else {
-                $cart->emptyCart();
-                header('Location: ' . $invoice['data']['invoice_url']);
-                exit;
-            }
+        $response = $this->plisio->createTransaction($request);
+        if ($response && $response['status'] !== 'error' && !empty($response['data'])) {
+            $cart->emptyCart();
+            JFactory::getApplication()->redirect($response['data']['invoice_url']);
+            exit();
+        } else {
+            $html = "<h3> An error occurred while placing order! Error info: " . implode(',', json_decode($response['data']['message'], true)) . "</h3>";
+            $this->processConfirmedOrderPaymentResponse(2, $cart, $order, $html, 'Plisio', '');
+            return TRUE;
         }
     }
 }

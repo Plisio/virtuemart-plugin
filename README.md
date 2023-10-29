@@ -16,10 +16,13 @@ Setup your store in API tab.
 
 ### via Extension Manager
 
-1. Download [plisio-virtuemart-1.0.0.zip](https://plisio.net/download/plugins/plisio-virtuemart-1.0.0.zip)
+1. Download [plg_vmpayment_plisio.zip](https://github.com/Plisio/virtuemart-plugin/releases/download/v4.0.0/plg_vmpayment_plisio.zip)
 
-2. Login to your VirtueMart store admin panel, go to *Extensions » Manage » Install*. In the *Upload Package File* part, choose **plisio-virtuemart-1.0.5.zip** you previously downloaded, then click **Upload & Install**.
+2. Login to your VirtueMart store admin panel, go to *System » Extensions » Upload Package File*. In the *Upload Package File* part, choose **plg_vmpayment_plisio.zip** you previously downloaded, then click **Upload & Install**.
 
-3. Go to *Extensions » Plugins*. In search box type **Plisio** and click **Search**. Either click on status indicator located in Plisio extension row, or mark the checkbox of Plisio extension row and click **Enable** at the top of admin panel.
+3. Go to *Manage Extensions*. In search box type **Plisio** and click **Search**. Either click on status indicator located in Plisio extension row, or mark the checkbox of Plisio extension row and click **Enable** at the top of admin panel.
 
-4. Go to *VirtueMart » Payment Methods » New*. Type in the information, selecting **VM Payment - Plisio** as **Payment Method**. Be sure to select **Yes** in the publish section. Click **Save**. Click **Configuration**. Fill in your *API Secret Key* with *Secret key* from Plisio API tab.  **Be sure to set order statuses correctly**. Click **Save & Close**.
+4. Go to *Components » VirtueMart » Payment Methods » New*. Type in the information, selecting **VM Payment - Plisio** as **Payment Method**. Be sure to select **Yes** in the publish section. Click **Save**. Click **Configuration**. Fill in your *API Secret Key* with *Secret key* from Plisio API tab.  **Be sure to set order statuses correctly**. Click **Save & Close**.
+
+## Notes
+The plugin version 4.0.0 is designed for Joomla version 4 and VirtueMart version 4, and supports PHP version 8.1. Testing on other configurations has not been conducted, so please report any bugs to Plisio support. Thank you!

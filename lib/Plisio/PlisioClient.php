@@ -4,7 +4,7 @@
  * Plisio  payment plugin
  *
  * @author Plisio
- * @version 1.1.0
+ * @version 4.0.0
  * @package VirtueMart
  * @subpackage payment
  * Copyright (C) 2019 - 2020 Virtuemart Team. All rights reserved.
